@@ -6,7 +6,7 @@ trait Observing { self =>
   private val refs: mutable.Set[Observer[_]] = new mutable.HashSet[Observer[_]]
 
   private class Observer[A](emitter: Emitter[A], f: A => Unit)
-  extends Reactor[A] {
+  extends Reactive[A] {
     def react(a: A) = f(a)
 
     def dispose() {

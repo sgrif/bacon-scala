@@ -11,17 +11,15 @@ trait Emitter[+A] {
       subscriber.react(a)
   }
 
-  private[this] var subscribers: List[WeakReference[Reactor[A]]] = Nil
+  private[this] var subscribers: List[WeakReference[Reactive[A]]] = Nil
 
-  def subs: List[WeakReference[Reactor[_]]] = subscribers
-
-  private[bacon] def subscribe(r: Reactor[A]) {
+  private[bacon] def subscribe(r: Reactive[A]) {
     synchronized {
       subscribers = WeakReference(r) :: subscribers
     }
   }
 
-  private[bacon] def unsubscribe(r: Reactor[A]) {
+  private[bacon] def unsubscribe(r: Reactive[A]) {
     synchronized {
       subscribers = subscribers.filter { subscriberReference =>
         val sub = subscriberReference.get

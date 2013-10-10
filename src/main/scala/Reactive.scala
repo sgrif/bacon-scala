@@ -1,5 +1,5 @@
 package com.seantheprogrammer.bacon
 
-trait Reactor[-A] {
+trait Reactive[-A] {
   def react(a: A): Unit
 }

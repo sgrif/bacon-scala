@@ -34,12 +34,12 @@ trait EventStream[A] extends Events[A] {
 
   def zip[B](that: Events[B]) = new Zipped(this, that)
 
-  abstract class ChildOf1[A](parent: Events[A]) extends Reactor[A] {
+  abstract class ChildOf1[A](parent: Events[A]) extends Reactive[A] {
     parent.subscribe(this)
   }
 
   class Combined[A](private val first: Events[A], private val second: Events[A])
-  extends EventStream[A] with Reactor[A] {
+  extends EventStream[A] with Reactive[A] {
     first.subscribe(this)
     second.subscribe(this)
     def react(a: A) = emit(a)
@@ -92,10 +92,10 @@ trait EventStream[A] extends Events[A] {
   class Flattened[A, B](parent: Events[A], f: A => Events[B])
   extends ChildOf1[A](parent) with EventStream[B] {
     def react(a: A) {
-      f(a).subscribe(childReactor)
+      f(a).subscribe(childReactive)
     }
 
-    private val childReactor = new Reactor[B] {
+    private val childReactive = new Reactive[B] {
       def react(b: B) = emit(b)
     }
   }
@@ -137,7 +137,7 @@ trait EventStream[A] extends Events[A] {
     private val as: mutable.Queue[A] = mutable.Queue.empty
     private val bs: mutable.Queue[B] = mutable.Queue.empty
 
-    private val aReactor = new Reactor[A] {
+    private val aReactive = new Reactive[A] {
       def react(a: A) {
         if (bs.nonEmpty)
           emit((a, bs.dequeue))
@@ -146,7 +146,7 @@ trait EventStream[A] extends Events[A] {
       }
     }
 
-    private val bReactor = new Reactor[B] {
+    private val bReactive = new Reactive[B] {
       def react(b: B) {
         if (as.nonEmpty)
           emit((as.dequeue, b))
@@ -155,7 +155,7 @@ trait EventStream[A] extends Events[A] {
       }
     }
 
-    aEvents.subscribe(aReactor)
-    bEvents.subscribe(bReactor)
+    aEvents.subscribe(aReactive)
+    bEvents.subscribe(bReactive)
   }
 }

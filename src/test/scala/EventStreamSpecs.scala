@@ -123,9 +123,11 @@ class EventStreamSpecs extends FunSpec with ShouldMatchers with Observing {
       observe(both) { e => sentEvents = e :: sentEvents }
       ints << 1
       strings << "2"
+      System.gc()
       ints << 3
+      strings << "4"
 
-      sentEvents should be (Left(3) :: Right("2") :: Left(1) :: Nil)
+      sentEvents should be (Right("4") :: Left(3) :: Right("2") :: Left(1) :: Nil)
     }
 
     it ("can be filtered") {

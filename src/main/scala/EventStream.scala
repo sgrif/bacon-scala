@@ -38,7 +38,7 @@ trait EventStream[A] extends Emitter[A] {
     parent.subscribe(this)
   }
 
-  class Combined[A](first: Emitter[A], second: Emitter[A])
+  class Combined[A](private val first: Emitter[A], private val second: Emitter[A])
   extends EventStream[A] with Reactor[A] {
     first.subscribe(this)
     second.subscribe(this)

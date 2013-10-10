@@ -114,6 +114,20 @@ class EventStreamSpecs extends FunSpec with ShouldMatchers with Observing {
       sentEvents should be (6 :: 5 :: Nil)
     }
 
+    it ("can wrap two streams in an either") {
+      var sentEvents: List[Either[Int, String]] = Nil
+      val ints = EventSource[Int]
+      val strings = EventSource[String]
+      val both = ints either strings
+
+      observe(both) { e => sentEvents = e :: sentEvents }
+      ints << 1
+      strings << "2"
+      ints << 3
+
+      sentEvents should be (Left(3) :: Right("2") :: Left(1) :: Nil)
+    }
+
     it ("can be filtered") {
       var sentEvents: List[Int] = Nil
       val ints = EventSource[Int]

@@ -8,6 +8,7 @@ trait Emitter[+A] {
   def collectFirst[B](pf: PartialFunction[A, B]): Emitter[B]
   def drop(count: Int): Emitter[A]
   def dropWhile(f: A => Boolean): Emitter[A]
+  def either[B](that: Emitter[B]): Emitter[Either[A, B]]
   def filter(f: A => Boolean): Emitter[A]
   def flatMap[B](f: A => Emitter[B]): Emitter[B]
   def foldLeft[B](init: B)(f: (B, A) => B): Emitter[B]

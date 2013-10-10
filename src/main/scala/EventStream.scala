@@ -15,6 +15,9 @@ trait EventStream[A] extends Emitter[A] {
 
   def dropWhile(f: A => Boolean) = new DroppedWhile(this, f)
 
+  def either[B](that: Emitter[B]): Emitter[Either[A, B]] =
+    this.map(Left.apply) ++ that.map(Right.apply)
+
   def filter(f: A => Boolean) = new Filtered(this, f)
 
   def filterNot(f: A => Boolean) = new Filtered(this, (a: A) => !f(a))

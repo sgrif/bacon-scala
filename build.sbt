@@ -4,7 +4,7 @@ name := "Scala Bacon"
 organization := "com.seantheprogrammer"
 
 // Set the project version
-version := "0.1"
+version := "0.1.1"
 
 // Set the version of Scala to use
 scalaVersion := "2.10.3"

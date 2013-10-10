@@ -201,28 +201,6 @@ class EventStreamSpecs extends FunSpec with ShouldMatchers with Observing {
       sentEvents should be (3 :: 2 :: 1 :: Nil)
     }
 
-    it ("stores the most recently emitted event") {
-      val ints = EventSource[Int]
-      val mapped = ints.map(_ + 1)
-      val sums = mapped.foldLeft(0) { _ + _ }
-
-      ints.lastValue should be (None)
-      mapped.lastValue should be (None)
-      sums.lastValue should be (Some(0))
-
-      ints << 1
-
-      ints.lastValue should be (Some(1))
-      mapped.lastValue should be (Some(2))
-      sums.lastValue should be (Some(2))
-
-      ints << 5
-
-      ints.lastValue should be (Some(5))
-      mapped.lastValue should be (Some(6))
-      sums.lastValue should be (Some(8))
-    }
-
     it ("can be given a callback for a limited number of events") {
       var sentEvents: List[Int] = Nil
       val ints = EventSource[Int]

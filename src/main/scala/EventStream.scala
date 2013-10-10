@@ -3,7 +3,7 @@ package com.seantheprogrammer.bacon
 import scala.ref.WeakReference
 import scala.collection.mutable
 
-trait EventStream[A] extends Emitter[A] {
+trait EventStream[A] extends Events[A] {
   def map[B](f: A => B) = new Mapped(this, f)
 
   def collect[B](pf: PartialFunction[A, B]) = new Collected(this, pf)
@@ -15,14 +15,14 @@ trait EventStream[A] extends Emitter[A] {
 
   def dropWhile(f: A => Boolean) = new DroppedWhile(this, f)
 
-  def either[B](that: Emitter[B]): Emitter[Either[A, B]] =
+  def either[B](that: Events[B]): Events[Either[A, B]] =
     this.map(Left.apply) ++ that.map(Right.apply)
 
   def filter(f: A => Boolean) = new Filtered(this, f)
 
   def filterNot(f: A => Boolean) = new Filtered(this, (a: A) => !f(a))
 
-  def flatMap[B](f: A => Emitter[B]) = new Flattened(this, f)
+  def flatMap[B](f: A => Events[B]) = new Flattened(this, f)
 
   def foldLeft[B](init: B)(f: (B, A) => B) = new Folded(this, init, f)
 
@@ -30,33 +30,33 @@ trait EventStream[A] extends Emitter[A] {
 
   def takeWhile(f: A => Boolean) = new TakenWhile(this, f)
 
-  def union[B >: A](that: Emitter[B]) = new Combined(this, that)
+  def union[B >: A](that: Events[B]) = new Combined(this, that)
 
-  def zip[B](that: Emitter[B]) = new Zipped(this, that)
+  def zip[B](that: Events[B]) = new Zipped(this, that)
 
-  abstract class ChildOf1[A](parent: Emitter[A]) extends Reactor[A] {
+  abstract class ChildOf1[A](parent: Events[A]) extends Reactor[A] {
     parent.subscribe(this)
   }
 
-  class Combined[A](private val first: Emitter[A], private val second: Emitter[A])
+  class Combined[A](private val first: Events[A], private val second: Events[A])
   extends EventStream[A] with Reactor[A] {
     first.subscribe(this)
     second.subscribe(this)
     def react(a: A) = emit(a)
   }
 
-  class Mapped[A, B](parent: Emitter[A], f: A => B)
+  class Mapped[A, B](parent: Events[A], f: A => B)
   extends ChildOf1[A](parent) with EventStream[B] {
     def react(a: A) = emit(f(a))
   }
 
-  class Collected[A, B](parent: Emitter[A], pf: PartialFunction[A, B])
+  class Collected[A, B](parent: Events[A], pf: PartialFunction[A, B])
   extends ChildOf1[A](parent) with EventStream[B] {
     def react(a: A) = pf.runWith(emit)(a)
   }
 
   class FirstCollected[A, B](
-    parent: Emitter[A],
+    parent: Events[A],
     pf: PartialFunction[A, B]
   ) extends ChildOf1[A](parent) with EventStream[B] {
     def react(a: A) {
@@ -65,7 +65,7 @@ trait EventStream[A] extends Emitter[A] {
     }
   }
 
-  class Dropped[A](parent: Emitter[A], private var count: Int)
+  class Dropped[A](parent: Events[A], private var count: Int)
   extends ChildOf1[A](parent) with EventStream[A] {
     def react(a: A) = count match {
       case 0 => emit(a)
@@ -73,7 +73,7 @@ trait EventStream[A] extends Emitter[A] {
     }
   }
 
-  class DroppedWhile[A](parent: Emitter[A], f: A => Boolean)
+  class DroppedWhile[A](parent: Events[A], f: A => Boolean)
   extends ChildOf1[A](parent) with EventStream[A] {
     private var dropping = true
 
@@ -84,12 +84,12 @@ trait EventStream[A] extends Emitter[A] {
     }
   }
 
-  class Filtered[A](parent: Emitter[A], f: A => Boolean)
+  class Filtered[A](parent: Events[A], f: A => Boolean)
   extends ChildOf1[A](parent) with EventStream[A] {
     def react(a: A) = if (f(a)) emit(a)
   }
 
-  class Flattened[A, B](parent: Emitter[A], f: A => Emitter[B])
+  class Flattened[A, B](parent: Events[A], f: A => Events[B])
   extends ChildOf1[A](parent) with EventStream[B] {
     def react(a: A) {
       f(a).subscribe(childReactor)
@@ -100,7 +100,7 @@ trait EventStream[A] extends Emitter[A] {
     }
   }
 
-  class Folded[A, B](parent: Emitter[A], init: B, f: (B, A) => B)
+  class Folded[A, B](parent: Events[A], init: B, f: (B, A) => B)
   extends ChildOf1[A](parent) with EventStream[B] {
     private var current: B = init
     emit(current)
@@ -111,7 +111,7 @@ trait EventStream[A] extends Emitter[A] {
     }
   }
 
-  class Taken[A](parent: Emitter[A], private var count: Int)
+  class Taken[A](parent: Events[A], private var count: Int)
   extends ChildOf1[A](parent) with EventStream[A] {
     def react(a: A) = count match {
       case 0 => parent.unsubscribe(this)
@@ -122,7 +122,7 @@ trait EventStream[A] extends Emitter[A] {
     }
   }
 
-  class TakenWhile[A](parent: Emitter[A], f: A => Boolean)
+  class TakenWhile[A](parent: Events[A], f: A => Boolean)
   extends ChildOf1[A](parent) with EventStream[A] {
     def react(a: A) {
       if (f(a))
@@ -132,7 +132,7 @@ trait EventStream[A] extends Emitter[A] {
     }
   }
 
-  class Zipped[A, B](aEmitter: Emitter[A], bEmitter: Emitter[B])
+  class Zipped[A, B](aEvents: Events[A], bEvents: Events[B])
   extends EventStream[(A, B)] {
     private val as: mutable.Queue[A] = mutable.Queue.empty
     private val bs: mutable.Queue[B] = mutable.Queue.empty
@@ -155,7 +155,7 @@ trait EventStream[A] extends Emitter[A] {
       }
     }
 
-    aEmitter.subscribe(aReactor)
-    bEmitter.subscribe(bReactor)
+    aEvents.subscribe(aReactor)
+    bEvents.subscribe(bReactor)
   }
 }

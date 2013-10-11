@@ -9,8 +9,7 @@ trait ReactorModule {
     self: Disposable =>
 
     def await[A](e: Emitter[A]): A @suspendable = shift { (k: A => Unit) =>
-      observeWithObserver(e) { (obs, v) =>
-        obs.dispose()
+      observeOnce(e) { v =>
         if (!self.isDisposed)
           k(v)
       }

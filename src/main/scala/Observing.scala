@@ -22,17 +22,20 @@ trait Observing { self =>
     def react(a: A) = f(a)
   }
 
-  private class SelfObserver[A](protected val emitter: Emitter[A],
-    f: (Observer[A], A) => Unit) extends Observer[A] {
-    override def react(a: A) = f(this, a)
+  private class SingleObserver[A](e: Emitter[A], f: A => Unit)
+  extends SimpleObserver[A](e, f) {
+    override def react(a: A) {
+      super.react(a)
+      dispose()
+    }
   }
 
   def observe[A](emitter: Emitter[A])(f: A => Unit): Observer[A] = {
     addObserver(emitter, new SimpleObserver[A](emitter, f))
   }
 
-  def observeWithObserver[A](emitter: Emitter[A])(f: (Observer[A], A) => Unit) {
-    addObserver(emitter, new SelfObserver[A](emitter, f))
+  def observeOnce[A](emitter: Emitter[A])(f: A => Unit): Observer[A] = {
+    addObserver(emitter, new SingleObserver[A](emitter, f))
   }
 
   private def addObserver[A](e: Emitter[A], obs: Observer[A]): Observer[A] = {

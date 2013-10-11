@@ -166,12 +166,12 @@ class EventStreamSpecs extends FunSpec with ShouldMatchers with Observing {
       strings << "1"
       intsmap("1") << 1
       intsmap("2") << 2
-      System.gc() // Ensure intermediate steps aren't getting GC'd
       strings << "2"
+      System.gc() // Ensure intermediate steps aren't getting GC'd
       intsmap("1") << 3
       intsmap("2") << 4
 
-      sentEvents should be (4 :: 3 :: 1 :: Nil)
+      sentEvents should be (4 :: 1 :: Nil)
     }
 
     it ("can be folded") {

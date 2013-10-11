@@ -3,39 +3,42 @@ package com.seantheprogrammer.bacon
 import scala.ref.WeakReference
 import scala.collection.mutable
 
-trait EventStream[A] extends Events[A] {
-  def map[B](f: A => B) = new Mapped(this, f)
+trait EventStream[A] extends Events[A] { outer =>
+  def map[B](f: A => B) = new Mapped(f)
 
-  def collect[B](pf: PartialFunction[A, B]) = new Collected(this, pf)
+  def collect[B](pf: PartialFunction[A, B]) = new Collected(pf)
 
-  def collectFirst[B](pf: PartialFunction[A, B]) =
-    new FirstCollected(this, pf)
+  def collectFirst[B](pf: PartialFunction[A, B]) = new CollectedFirst(pf)
 
-  def drop(count: Int) = new Dropped(this, count)
+  def drop(count: Int) = new Dropped(count)
 
-  def dropWhile(f: A => Boolean) = new DroppedWhile(this, f)
+  def dropWhile(f: A => Boolean) = new DroppedWhile(f)
 
   def either[B](that: Events[B]): Events[Either[A, B]] =
     this.map(Left.apply) ++ that.map(Right.apply)
 
-  def filter(f: A => Boolean) = new Filtered(this, f)
+  def filter(f: A => Boolean) = new Filtered(f)
 
-  def filterNot(f: A => Boolean) = new Filtered(this, (a: A) => !f(a))
+  def filterNot(f: A => Boolean) = new Filtered((a: A) => !f(a))
 
-  def flatMap[B](f: A => Events[B]) = new Flattened(this, f)
+  def flatMap[B](f: A => Events[B]) = new Flattened(f)
 
-  def foldLeft[B](init: B)(f: (B, A) => B) = new Folded(this, init, f)
+  def foldLeft[B](init: B)(f: (B, A) => B) = new Folded(init, f)
 
-  def take(count: Int) = new Taken(this, count)
+  def take(count: Int) = new Taken(count)
 
-  def takeWhile(f: A => Boolean) = new TakenWhile(this, f)
+  def takeWhile(f: A => Boolean) = new TakenWhile(f)
 
   def union[B >: A](that: Events[B]) = new Combined(this, that)
 
-  def zip[B](that: Events[B]) = new Zipped(this, that)
+  def zip[B](that: Events[B]) = new Zipped(that)
 
-  abstract class ChildOf1[A](parent: Events[A]) extends Reactive[A] {
-    parent.subscribe(this)
+  trait ChildStream[B] extends Reactive[A] with EventStream[B] {
+    outer.subscribe(this)
+
+    def disconnect() {
+      outer.unsubscribe(this)
+    }
   }
 
   class Combined[A](private val first: Events[A], private val second: Events[A])
@@ -45,36 +48,26 @@ trait EventStream[A] extends Events[A] {
     def react(a: A) = emit(a)
   }
 
-  class Mapped[A, B](parent: Events[A], f: A => B)
-  extends ChildOf1[A](parent) with EventStream[B] {
+  class Mapped[B](f: A => B) extends ChildStream[B] {
     def react(a: A) = emit(f(a))
   }
 
-  class Collected[A, B](parent: Events[A], pf: PartialFunction[A, B])
-  extends ChildOf1[A](parent) with EventStream[B] {
+  class Collected[B](pf: PartialFunction[A, B]) extends ChildStream[B] {
     def react(a: A) = pf.runWith(emit)(a)
   }
 
-  class FirstCollected[A, B](
-    parent: Events[A],
-    pf: PartialFunction[A, B]
-  ) extends ChildOf1[A](parent) with EventStream[B] {
-    def react(a: A) {
-      if(pf.runWith(emit)(a))
-        parent.unsubscribe(this)
-    }
+  class CollectedFirst[B](pf: PartialFunction[A, B]) extends ChildStream[B] {
+    def react(a: A) = if (pf.runWith(emit)(a)) disconnect()
   }
 
-  class Dropped[A](parent: Events[A], private var count: Int)
-  extends ChildOf1[A](parent) with EventStream[A] {
+  class Dropped(private var count: Int) extends ChildStream[A] {
     def react(a: A) = count match {
       case 0 => emit(a)
       case _ => count -= 1
     }
   }
 
-  class DroppedWhile[A](parent: Events[A], f: A => Boolean)
-  extends ChildOf1[A](parent) with EventStream[A] {
+  class DroppedWhile(f: A => Boolean) extends ChildStream[A] {
     private var dropping = true
 
     def react(a: A) {
@@ -84,15 +77,23 @@ trait EventStream[A] extends Events[A] {
     }
   }
 
-  class Filtered[A](parent: Events[A], f: A => Boolean)
-  extends ChildOf1[A](parent) with EventStream[A] {
+  class Filtered(f: A => Boolean) extends ChildStream[A] {
     def react(a: A) = if (f(a)) emit(a)
   }
 
-  class Flattened[A, B](parent: Events[A], f: A => Events[B])
-  extends ChildOf1[A](parent) with EventStream[B] {
+  class Flattened[B](f: A => Events[B]) extends ChildStream[B] {
+    private var currentChild: Option[Events[B]] = None
+
     def react(a: A) {
-      f(a).subscribe(childReactive)
+      for (child <- currentChild) child.unsubscribe(childReactive)
+      currentChild = Some(f(a))
+      currentChild.get.subscribe(childReactive)
+    }
+
+    override def disconnect() {
+      for (child <- currentChild)
+        child.unsubscribe(childReactive)
+      super.disconnect()
     }
 
     private val childReactive = new Reactive[B] {
@@ -100,8 +101,7 @@ trait EventStream[A] extends Events[A] {
     }
   }
 
-  class Folded[A, B](parent: Events[A], init: B, f: (B, A) => B)
-  extends ChildOf1[A](parent) with EventStream[B] {
+  class Folded[B](init: B, f: (B, A) => B) extends ChildStream[B] {
     private var current: B = init
     emit(current)
 
@@ -111,10 +111,9 @@ trait EventStream[A] extends Events[A] {
     }
   }
 
-  class Taken[A](parent: Events[A], private var count: Int)
-  extends ChildOf1[A](parent) with EventStream[A] {
+  class Taken(private var count: Int) extends ChildStream[A] {
     def react(a: A) = count match {
-      case 0 => parent.unsubscribe(this)
+      case 0 => disconnect()
       case _ => {
         count -= 1
         emit(a)
@@ -122,18 +121,16 @@ trait EventStream[A] extends Events[A] {
     }
   }
 
-  class TakenWhile[A](parent: Events[A], f: A => Boolean)
-  extends ChildOf1[A](parent) with EventStream[A] {
+  class TakenWhile(f: A => Boolean) extends ChildStream[A] {
     def react(a: A) {
       if (f(a))
         emit(a)
       else
-        parent.unsubscribe(this)
+        disconnect()
     }
   }
 
-  class Zipped[A, B](aEvents: Events[A], bEvents: Events[B])
-  extends EventStream[(A, B)] {
+  class Zipped[B](bEvents: Events[B]) extends EventStream[(A, B)] {
     private val as: mutable.Queue[A] = mutable.Queue.empty
     private val bs: mutable.Queue[B] = mutable.Queue.empty
 
@@ -155,7 +152,7 @@ trait EventStream[A] extends Events[A] {
       }
     }
 
-    aEvents.subscribe(aReactive)
+    outer.subscribe(aReactive)
     bEvents.subscribe(bReactive)
   }
 }

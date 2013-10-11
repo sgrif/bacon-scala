@@ -2,30 +2,32 @@ package com.seantheprogrammer.bacon
 
 import scala.util.continuations._
 
-trait ReactorDSL {
-  this: Disposable =>
+trait ReactorModule {
+  this: Observing =>
 
-  def await[A](e: Emitter[A]): A @suspendable = shift { (k: A => Unit) =>
-    val r = new Reactive[A] {
-      def react(a: A) = {
-        if (!isDisposed) k(a)
-        e.unsubscribe(this)
+  trait ReactorDSL {
+    self: Disposable =>
+
+    def await[A](e: Emitter[A]): A @suspendable = shift { (k: A => Unit) =>
+      observeWithObserver(e) { (obs, v) =>
+        obs.dispose()
+        if (!self.isDisposed)
+          k(v)
       }
     }
-    e.subscribe(r)
   }
-}
 
-object Reactor {
-  def loop(op: ReactorDSL => Unit @suspendable) = new Reactor {
-    def body = while (!isDisposed) op(this)
+  object Reactor {
+    def loop(op: ReactorDSL => Unit @suspendable) = new Reactor {
+      def body = while (!isDisposed) op(this)
+    }
   }
-}
 
-abstract class Reactor extends Disposable with ReactorDSL {
-  def body(): Unit @suspendable
+  abstract class Reactor extends Disposable with ReactorDSL {
+    def body(): Unit @suspendable
 
-  reset {
-    body()
+    reset {
+      body()
+    }
   }
 }

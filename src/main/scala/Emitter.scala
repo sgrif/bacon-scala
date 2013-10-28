@@ -6,6 +6,9 @@ trait Emitter[+A] {
   def onValue(f: A => Unit)(implicit obs: Observing): Unit =
     obs.observe(this)(f)
 
+  //Public only for testing purposes
+  def countSubscribers = filteredSubscribers.size
+
   protected[this] def emit(a: A) {
     for (WeakReference(subscriber) <- subscribers)
       subscriber.react(a)

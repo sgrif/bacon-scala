@@ -7,6 +7,8 @@ trait Emitter[+A] {
   //Public only for testing purposes
   def countSubscribers = subscribers.size
 
+  def hasSubscribers = subscribers.nonEmpty
+
   protected[this] def emit(a: A) {
     subscribers.foreach(_.react(a))
   }

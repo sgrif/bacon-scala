@@ -18,7 +18,8 @@ trait Property[A] extends Emitter[A] {
 
   def invalidate() {
     children.foreach(_.invalidate())
-    emit(currentValue)
+    if (hasSubscribers)
+      emit(currentValue)
   }
 
   def toEventStream: EventStream[A] = new PropertyEventStream

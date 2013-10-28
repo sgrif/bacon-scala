@@ -7,7 +7,6 @@ class EmitterSpecs extends FunSpec with Matchers with Observing {
     var mapped = ints.map(_ + 1)
     ints.filter(_ < 3)
 
-    ints.countSubscribers should be (2)
     System.gc()
     ints.countSubscribers should be (1)
     mapped = null
@@ -20,7 +19,6 @@ class EmitterSpecs extends FunSpec with Matchers with Observing {
     ints.map(_ + 1)
     val observer = observe(ints) { _ => }
 
-    ints.countSubscribers should be (2)
     System.gc()
     ints.countSubscribers should be (1)
     observer.dispose()

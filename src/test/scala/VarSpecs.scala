@@ -13,7 +13,7 @@ class VarSpecs extends FunSpec with Matchers with Observing {
     x() should be (1)
   }
 
-  it ("emits changes as events") {
+  it ("emits changes in value") {
     val x = Var(3)
     var emitted: Int = 0
     observe(x) { v => emitted = v }

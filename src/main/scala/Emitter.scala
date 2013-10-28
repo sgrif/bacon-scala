@@ -21,10 +21,9 @@ trait Emitter[+A] {
 
   private[bacon] def unsubscribe(r: Reactive[A]) {
     synchronized {
-      subscribers = subscribers.filter { subscriberReference =>
-        val sub = subscriberReference.get
-        sub.nonEmpty && sub.get != r
-      }
+      subscribers = filteredSubscribers.filter(_.get.get != r)
     }
   }
+
+  private[this] def filteredSubscribers = subscribers.filter(_.get.nonEmpty)
 }

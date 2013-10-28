@@ -1,8 +1,7 @@
 import com.seantheprogrammer.bacon.{ReactorModule, Observing, EventSource}
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.FunSpec
+import org.scalatest._
 
-class ReactorSpecs extends FunSpec with ShouldMatchers
+class ReactorSpecs extends FunSpec with Matchers
 with ReactorModule with Observing {
   describe ("looping") {
     it ("loops through its body until disposed") {

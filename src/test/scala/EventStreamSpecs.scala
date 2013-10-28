@@ -1,8 +1,7 @@
 import com.seantheprogrammer.bacon.{Observing, EventSource, Emitter}
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.FunSpec
+import org.scalatest._
 
-class EventStreamSpecs extends FunSpec with ShouldMatchers with Observing {
+class EventStreamSpecs extends FunSpec with Matchers with Observing {
   describe("Emitting events") {
     it("should notify subscribers") {
       var sentEvents: List[Int] = Nil

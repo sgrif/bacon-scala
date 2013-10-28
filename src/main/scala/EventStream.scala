@@ -33,13 +33,15 @@ trait EventStream[A] extends Events[A] { outer =>
 
   def zip[B](that: Events[B]) = new Zipped(that)
 
-  trait ChildStream[B] extends Reactive[A] with EventStream[B] {
+  trait ChildReactive extends Reactive[A] {
     outer.subscribe(this)
 
     def disconnect() {
       outer.unsubscribe(this)
     }
   }
+
+  trait ChildStream[B] extends ChildReactive with EventStream[B]
 
   class Combined[A](private val first: Events[A], private val second: Events[A])
   extends EventStream[A] with Reactive[A] {
@@ -101,13 +103,12 @@ trait EventStream[A] extends Events[A] { outer =>
     }
   }
 
-  class Folded[B](init: B, f: (B, A) => B) extends ChildStream[B] {
-    private var current: B = init
-    emit(current)
+  class Folded[B](init: B, f: (B, A) => B) extends Property[B] with ChildReactive {
+    protected[this] var currentValue: B = init
 
     def react(a: A) {
-      current = f(current, a)
-      emit(current)
+      currentValue = f(currentValue, a)
+      invalidate()
     }
   }
 

@@ -9,7 +9,7 @@ trait Events[+A] extends Emitter[A] {
   def either[B](that: Events[B]): Events[Either[A, B]]
   def filter(f: A => Boolean): Events[A]
   def flatMap[B](f: A => Events[B]): Events[B]
-  def foldLeft[B](init: B)(f: (B, A) => B): Events[B]
+  def foldLeft[B](init: B)(f: (B, A) => B): Property[B]
   def take(count: Int): Events[A]
   def takeWhile(f: A => Boolean): Events[A]
   def union[B >: A](that: Events[B]): Events[B]

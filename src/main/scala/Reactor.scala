@@ -1,5 +1,6 @@
 package com.seantheprogrammer.bacon
 
+import scala.runtime.IntRef
 import scala.util.continuations._
 
 trait ReactorModule {

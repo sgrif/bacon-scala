@@ -15,7 +15,7 @@ class DynamicPropertySpecs extends FunSpec with Matchers with Observing {
     val d = Property { x() + y() }
 
     var emitted: List[Int] = Nil
-    observe(d) { v => emitted = v :: emitted }
+    d.onValue { v => emitted = v :: emitted }
     System.gc()
 
     x() = 2
@@ -46,7 +46,7 @@ class DynamicPropertySpecs extends FunSpec with Matchers with Observing {
     val y = Var(1)
     var bodyEvaluated = false
     val d = Property { if (b()) x() else y(); bodyEvaluated = true }
-    observe(d) { _ => }
+    d.onValue { _ => }
 
     bodyEvaluated = false
     y() = 2
@@ -88,7 +88,7 @@ class DynamicPropertySpecs extends FunSpec with Matchers with Observing {
     x() = 4
 
     bodyEvaluated should be (false)
-    observe(d) { _ => }
+    d.onValue { _ => }
     bodyEvaluated should be (true)
   }
 
@@ -98,7 +98,7 @@ class DynamicPropertySpecs extends FunSpec with Matchers with Observing {
     d()
     bodyEvaluated = false
 
-    observe(d) { _ => }
+    d.onValue { _ => }
     bodyEvaluated should be (false)
   }
 }

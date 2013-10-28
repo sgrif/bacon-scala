@@ -3,6 +3,8 @@ package com.seantheprogrammer.bacon
 import scala.collection.mutable
 
 trait Observing { self =>
+  implicit val obs = this
+
   private val refs: mutable.Set[Observer[_]] = new mutable.HashSet[Observer[_]]
 
   trait Observer[A] extends Reactive[A] with Disposable {

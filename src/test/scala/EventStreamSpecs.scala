@@ -186,20 +186,6 @@ class EventStreamSpecs extends FunSpec with Matchers with Observing {
       sentEvents should be (6 :: 3 :: 1 :: Nil)
     }
 
-    it ("can be given a callback with an implicit observer") {
-      implicit val observing = new Object with Observing
-
-      var sentEvents: List[Int] = Nil
-      val ints = EventSource[Int]
-
-      ints.onValue { i => sentEvents = i :: sentEvents }
-      ints << 1
-      ints << 2
-      ints << 3
-
-      sentEvents should be (3 :: 2 :: 1 :: Nil)
-    }
-
     it ("can be given a callback for a limited number of events") {
       var sentEvents: List[Int] = Nil
       val ints = EventSource[Int]

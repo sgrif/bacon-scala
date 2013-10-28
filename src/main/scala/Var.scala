@@ -1,21 +1,11 @@
 package com.seantheprogrammer.bacon
 
-class Var[A] private (initial: A) extends Emitter[A] {
-  private[this] var currentValue = initial
-
-  def apply(): A = currentValue
+class Var[A] private (initial: A) extends Property[A] {
+  protected[this] var currentValue = initial
 
   def update(a: A) = {
     currentValue = a
-    emit(a)
-  }
-
-  def toEventStream: EventStream[A] = new VarEventStream
-
-  private class VarEventStream extends EventStream[A] with Reactive[A] {
-    Var.this.subscribe(this)
-
-    def react(a: A) = emit(a)
+    invalidate()
   }
 }
 

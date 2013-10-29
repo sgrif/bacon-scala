@@ -13,9 +13,9 @@ trait Emitter[+A] {
     subscribers.foreach(_.react(a))
   }
 
-  private[this] val subscribers: WeakList[Reactive[A]] = new WeakList
+  private[this] val subscribers: WeakList[Reactor[A]] = new WeakList
 
-  private[bacon] def subscribe(r: Reactive[A]) = subscribers.add(r)
+  private[bacon] def subscribe(r: Reactor[A]) = subscribers.add(r)
 
-  private[bacon] def unsubscribe(r: Reactive[A]) = subscribers.remove(r)
+  private[bacon] def unsubscribe(r: Reactor[A]) = subscribers.remove(r)
 }

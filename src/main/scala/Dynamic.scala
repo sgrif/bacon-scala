@@ -23,7 +23,7 @@ class Dynamic[A] private[bacon] (f: => A) extends Property[A] {
     super.invalidate()
   }
 
-  override def subscribe(r: Reactive[A]) {
+  override def subscribe(r: Reactor[A]) {
     super.subscribe(r)
     currentState
   }

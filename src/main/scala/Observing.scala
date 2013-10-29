@@ -7,7 +7,7 @@ trait Observing { self =>
 
   private val refs: mutable.Set[Observer[_]] = new mutable.HashSet[Observer[_]]
 
-  trait Observer[A] extends Reactive[A] with Disposable {
+  trait Observer[A] extends Reactor[A] with Disposable {
     protected val emitter: Emitter[A]
 
     override def dispose() {

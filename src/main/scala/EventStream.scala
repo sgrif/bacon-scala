@@ -33,7 +33,7 @@ trait EventStream[A] extends Events[A] { outer =>
 
   def zip[B](that: Events[B]) = new Zipped(that)
 
-  trait ChildReactive extends Reactive[A] {
+  trait ChildReactor extends Reactor[A] {
     outer.subscribe(this)
 
     def disconnect() {
@@ -41,10 +41,10 @@ trait EventStream[A] extends Events[A] { outer =>
     }
   }
 
-  trait ChildStream[B] extends ChildReactive with EventStream[B]
+  trait ChildStream[B] extends ChildReactor with EventStream[B]
 
   class Combined[A](private val first: Events[A], private val second: Events[A])
-  extends EventStream[A] with Reactive[A] {
+  extends EventStream[A] with Reactor[A] {
     first.subscribe(this)
     second.subscribe(this)
     def react(a: A) = emit(a)
@@ -87,23 +87,23 @@ trait EventStream[A] extends Events[A] { outer =>
     private var currentChild: Option[Events[B]] = None
 
     def react(a: A) {
-      for (child <- currentChild) child.unsubscribe(childReactive)
+      for (child <- currentChild) child.unsubscribe(childReactor)
       currentChild = Some(f(a))
-      currentChild.get.subscribe(childReactive)
+      currentChild.get.subscribe(childReactor)
     }
 
     override def disconnect() {
       for (child <- currentChild)
-        child.unsubscribe(childReactive)
+        child.unsubscribe(childReactor)
       super.disconnect()
     }
 
-    private val childReactive = new Reactive[B] {
+    private val childReactor = new Reactor[B] {
       def react(b: B) = emit(b)
     }
   }
 
-  class Folded[B](init: B, f: (B, A) => B) extends Property[B] with ChildReactive {
+  class Folded[B](init: B, f: (B, A) => B) extends Property[B] with ChildReactor {
     protected[this] var currentValue: B = init
 
     def react(a: A) {
@@ -135,7 +135,7 @@ trait EventStream[A] extends Events[A] { outer =>
     private val as: mutable.Queue[A] = mutable.Queue.empty
     private val bs: mutable.Queue[B] = mutable.Queue.empty
 
-    private val aReactive = new Reactive[A] {
+    private val aReactor = new Reactor[A] {
       def react(a: A) {
         if (bs.nonEmpty)
           emit((a, bs.dequeue))
@@ -144,7 +144,7 @@ trait EventStream[A] extends Events[A] { outer =>
       }
     }
 
-    private val bReactive = new Reactive[B] {
+    private val bReactor = new Reactor[B] {
       def react(b: B) {
         if (as.nonEmpty)
           emit((as.dequeue, b))
@@ -153,7 +153,7 @@ trait EventStream[A] extends Events[A] { outer =>
       }
     }
 
-    outer.subscribe(aReactive)
-    bEvents.subscribe(bReactive)
+    outer.subscribe(aReactor)
+    bEvents.subscribe(bReactor)
   }
 }

@@ -28,7 +28,7 @@ trait Property[A] extends Emitter[A] {
 
   protected[bacon] def removeChild(p: Property[_]) = children.remove(p)
 
-  private class PropertyEventStream extends EventStream[A] with Reactive[A] {
+  private class PropertyEventStream extends EventStream[A] with Reactor[A] {
     Property.this.subscribe(this)
 
     def react(a: A) = emit(a)

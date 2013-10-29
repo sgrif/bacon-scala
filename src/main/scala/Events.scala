@@ -16,4 +16,5 @@ trait Events[+A] extends Emitter[A] {
   def zip[B](that: Events[B]): Events[(A, B)]
 
   def ++[B >: A](that: Events[B]): Events[B] = this.union(that)
+  def toEventStream = this
 }

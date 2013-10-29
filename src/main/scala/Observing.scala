@@ -32,11 +32,13 @@ trait Observing { self =>
     }
   }
 
-  def observe[A](emitter: Emitter[A])(f: A => Unit): Observer[A] = {
+  def observe[A](observable: Observable[A])(f: A => Unit): Observer[A] = {
+    val emitter = observable.toEmitter
     addObserver(emitter, new SimpleObserver[A](emitter, f))
   }
 
-  def observeOnce[A](emitter: Emitter[A])(f: A => Unit): Observer[A] = {
+  def observeOnce[A](observable: Observable[A])(f: A => Unit): Observer[A] = {
+    val emitter = observable.toEmitter
     addObserver(emitter, new SingleObserver[A](emitter, f))
   }
 

@@ -41,7 +41,7 @@ trait EventStream[A] extends Events[A] { outer =>
     }
   }
 
-  trait ChildStream[B] extends ChildReactor with EventStream[B]
+  trait ChildStream[B] extends EventStream[B] with ChildReactor
 
   class Combined[A](private val first: Events[A], private val second: Events[A])
   extends EventStream[A] with Reactor[A] {

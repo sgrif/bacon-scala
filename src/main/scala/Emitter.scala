@@ -1,13 +1,12 @@
 package com.seantheprogrammer.bacon
 
-trait Emitter[+A] {
-  def onValue(f: A => Unit)(implicit obs: Observing): Unit =
-    obs.observe(this)(f)
-
+trait Emitter[+A] extends Observable[A] {
   //Public only for testing purposes
   def countSubscribers = subscribers.size
 
   def hasSubscribers = subscribers.nonEmpty
+
+  def toEmitter = this
 
   protected[this] def emit(a: A) {
     subscribers.foreach(_.react(a))

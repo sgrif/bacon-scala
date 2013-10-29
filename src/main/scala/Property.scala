@@ -1,9 +1,7 @@
 package com.seantheprogrammer.bacon
 
-trait Property[A] extends Emitter[A] {
+trait Property[A] extends Observable[A] with Invalidator {
   protected[this] def currentValue: A
-
-  private[this] val children = new WeakList[Property[_]]
 
   def apply(): A = {
     Dynamic.enclosing.value = Dynamic.enclosing.value match {
@@ -16,28 +14,9 @@ trait Property[A] extends Emitter[A] {
     currentValue
   }
 
-  def invalidate() {
-    children.foreach(_.invalidate())
-    if (hasSubscribers)
-      emit(currentValue)
-  }
+  def toEventStream: EventStream[A] = new PropertyEventStream(this)
 
-  def toEventStream: EventStream[A] = new PropertyEventStream
-
-  override def subscribe(r: Reactor[A]) = {
-    super.subscribe(r)
-    r.react(currentValue)
-  }
-
-  protected[bacon] def addChild(p: Property[_]) = children.add(p)
-
-  protected[bacon] def removeChild(p: Property[_]) = children.remove(p)
-
-  private class PropertyEventStream extends EventStream[A] with Reactor[A] {
-    Property.this.subscribe(this)
-
-    def react(a: A) = emit(a)
-  }
+  def toEmitter = toEventStream
 }
 
 object Property {

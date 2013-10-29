@@ -1,7 +1,9 @@
 import com.seantheprogrammer.bacon.{Property, Var, Observing}
 import org.scalatest._
 
-class DynamicPropertySpecs extends FunSpec with Matchers with Observing {
+class DynamicPropertySpecs extends FunSpec with Matchers with Observing with PropertyBehaviors {
+  it should behave like aProperty(makeProperty)
+
   it ("gets an initial value from evaluating the body") {
     val x = Var(1)
     val d = Property { x() + 1 }
@@ -22,7 +24,7 @@ class DynamicPropertySpecs extends FunSpec with Matchers with Observing {
     y() = 2
     x() = 5
 
-    emitted should be (List(7, 4, 3))
+    emitted should be (List(7, 4, 3, 2))
   }
 
   it ("only evaluates its body when invalidated") {
@@ -100,5 +102,10 @@ class DynamicPropertySpecs extends FunSpec with Matchers with Observing {
 
     d.onValue { _ => }
     bodyEvaluated should be (false)
+  }
+
+  private def makeProperty[A](a: A): Property[A] = {
+    val x = Var(a)
+    Property { x() }
   }
 }

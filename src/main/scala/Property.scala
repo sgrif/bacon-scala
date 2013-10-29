@@ -24,6 +24,11 @@ trait Property[A] extends Emitter[A] {
 
   def toEventStream: EventStream[A] = new PropertyEventStream
 
+  override def subscribe(r: Reactor[A]) = {
+    super.subscribe(r)
+    r.react(currentValue)
+  }
+
   protected[bacon] def addChild(p: Property[_]) = children.add(p)
 
   protected[bacon] def removeChild(p: Property[_]) = children.remove(p)

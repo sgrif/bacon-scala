@@ -183,7 +183,7 @@ class EventStreamSpecs extends FunSpec with Matchers with Observing {
       ints << 2
       ints << 3
 
-      sentEvents should be (6 :: 3 :: 1 :: Nil)
+      sentEvents.take(3) should be (6 :: 3 :: 1 :: Nil)
     }
 
     it ("can be given a callback for a limited number of events") {

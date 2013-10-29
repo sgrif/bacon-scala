@@ -1,11 +1,8 @@
 import com.seantheprogrammer.bacon.{Var, Observing}
 import org.scalatest._
 
-class VarSpecs extends FunSpec with Matchers with Observing {
-  it ("holds an initial value") {
-    val x = Var(2)
-    x() should be (2)
-  }
+class VarSpecs extends FunSpec with Matchers with Observing with PropertyBehaviors {
+  it should behave like aProperty(Var.apply)
 
   it ("can be updated to a new value") {
     val x = Var(2)

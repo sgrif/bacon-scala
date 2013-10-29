@@ -17,6 +17,8 @@ trait Property[A] extends Observable[A] with Invalidator {
   def toEventStream: EventStream[A] = new PropertyEventStream(this)
 
   def toEmitter = toEventStream
+
+  def changes = toEventStream
 }
 
 object Property {
